@@ -1,0 +1,40 @@
+# Data configuration
+
+data:
+  # Raw data paths
+  raw_data_dir: "data/raw"
+  
+  # Processed data paths
+  processed_data_dir: "data/processed"
+  train_dir: "data/processed/train"
+  val_dir: "data/processed/val"
+  test_dir: "data/processed/test"
+  
+  # Data split ratios
+  train_ratio: 0.7
+  val_ratio: 0.15
+  test_ratio: 0.15
+  
+  # Image configuration
+  img_size: [224, 224]
+  img_channels: 3
+  img_format: "jpg"
+  
+  # Class information
+  classes:
+    - "NORMAL"
+    - "PNEUMONIA"
+  
+  # Data augmentation
+  augmentation:
+    enabled: true
+    horizontal_flip: true
+    rotation_range: 0.1
+    zoom_range: 0.1
+    contrast_range: 0.1
+    brightness_range: null
+    
+  # Preprocessing
+  preprocessing:
+    normalization: "rescale"  # rescale, standardize
+    resize_method: "bilinear"

@@ -1,0 +1,13 @@
+# Development dependencies
+-r requirements.txt
+
+# Additional dev tools
+ipython==8.18.1
+jupyterlab==4.0.9
+
+# Documentation
+sphinx==7.2.6
+sphinx-rtd-theme==2.0.0
+
+# Pre-commit hooks
+pre-commit==3.6.0

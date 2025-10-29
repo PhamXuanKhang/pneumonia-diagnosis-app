@@ -1,0 +1,19 @@
+# Model configuration
+
+model:
+  name: "pneumonia_classifier"
+  type: "transfer_learning"  # or "custom_cnn"
+  base_model: "mobilenetv2"  # mobilenetv2, resnet50, efficientnetb0, inceptionv3
+  num_classes: 2  # NORMAL, PNEUMONIA
+  trainable_base: false
+  
+  # Model architecture (for custom CNN)
+  filters: [32, 64, 128, 256]
+  dense_units: [512, 256]
+  dropout_rate: 0.5
+  
+  # Input configuration
+  input_shape: [224, 224, 3]
+  
+  # Output configuration
+  activation: "softmax"  # softmax for multi-class, sigmoid for binary

@@ -1,0 +1,74 @@
+name: Model Training
+
+on:
+  workflow_dispatch:
+    inputs:
+      config:
+        description: 'Training config file'
+        required: false
+        default: 'ml/configs/training_config.yaml'
+      epochs:
+        description: 'Number of epochs'
+        required: false
+        default: '50'
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        cd ml
+        pip install -r requirements.txt
+        pip install -e .
+    
+    - name: Setup DVC
+      uses: iterative/setup-dvc@v1
+    
+    - name: Pull data with DVC
+      run: |
+        dvc pull
+      env:
+        GDRIVE_CREDENTIALS_DATA: ${{ secrets.GDRIVE_CREDENTIALS_DATA }}
+    
+    - name: Train model
+      run: |
+        python ml/scripts/train.py --config ${{ github.event.inputs.config }}
+    
+    - name: Evaluate model
+      run: |
+        python ml/scripts/evaluate.py \
+          --model_path ml/models/saved_models/pneumonia_mobilenetv2 \
+          --config ${{ github.event.inputs.config }}
+    
+    - name: Convert to TFLite
+      run: |
+        python ml/scripts/convert_to_tflite.py \
+          --model_path ml/models/saved_models/pneumonia_mobilenetv2 \
+          --output_path ml/models/tflite/pneumonia_mobilenetv2.tflite \
+          --quantize
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: trained-model
+        path: |
+          ml/models/saved_models/
+          ml/models/tflite/
+          ml/outputs/
+    
+    - name: Push models with DVC
+      run: |
+        dvc add ml/models/saved_models/pneumonia_mobilenetv2
+        dvc add ml/models/tflite/pneumonia_mobilenetv2.tflite
+        dvc push
+      env:
+        GDRIVE_CREDENTIALS_DATA: ${{ secrets.GDRIVE_CREDENTIALS_DATA }}
