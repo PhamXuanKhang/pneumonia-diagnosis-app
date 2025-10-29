@@ -4,8 +4,8 @@ data:
   raw_dir: "ml/data/raw"
   processed_dir: "ml/data/processed"
   train_ratio: 0.7
-  val_ratio: 0.15
-  test_ratio: 0.15
+  val_ratio: 0.1
+  test_ratio: 0.2
   img_size: [224, 224]
 
 model:
