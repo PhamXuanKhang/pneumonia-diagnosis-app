@@ -1,4 +1,4 @@
 [core]
-    remote = myremote
-['remote "myremote"']
+    remote = myazure
+['remote "myazure"']
     url = azure://dvc-data/pneumonia-data
