@@ -24,7 +24,7 @@ python-dotenv==1.0.0
 tensorboard==2.15.1
 
 # DVC for data versioning
-dvc==3.37.0
+dvc[azure]==3.37.0
 
 # Jupyter for notebooks
 jupyter==1.0.0
