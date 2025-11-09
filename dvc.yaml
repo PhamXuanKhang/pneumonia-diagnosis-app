@@ -1,53 +1,53 @@
-# DVC Pipeline Definition
+# # DVC Pipeline Definition
 
-stages:
-  data_preparation:
-    cmd: python ml/scripts/data_pipeline.py --source_dir ${data.raw_dir} --output_dir ${data.processed_dir}
-    deps:
-      - ml/data/raw
-      - ml/scripts/data_pipeline.py
-    params:
-      - data.train_ratio
-      - data.val_ratio
-      - data.test_ratio
-    outs:
-      - ml/data/processed/train
-      - ml/data/processed/val
-      - ml/data/processed/test
+# stages:
+#   data_preparation:
+#     cmd: python ml/scripts/data_pipeline.py --source_dir ${data.raw_dir} --output_dir ${data.processed_dir}
+#     deps:
+#       - ml/data/raw
+#       - ml/scripts/data_pipeline.py
+#     params:
+#       - data.train_ratio
+#       - data.val_ratio
+#       - data.test_ratio
+#     outs:
+#       - ml/data/processed/train
+#       - ml/data/processed/val
+#       - ml/data/processed/test
 
-  train:
-    cmd: python ml/scripts/train.py --config ml/configs/training_config.yaml
-    deps:
-      - ml/data/processed/train
-      - ml/data/processed/val
-      - ml/scripts/train.py
-      - ml/src
-    params:
-      - training
-      - model
-    outs:
-      - ml/models/saved_models/${model.name}
-      - ml/models/checkpoints
-    metrics:
-      - ml/logs/training_log.csv:
-          cache: false
+#   train:
+#     cmd: python ml/scripts/train.py --config ml/configs/training_config.yaml
+#     deps:
+#       - ml/data/processed/train
+#       - ml/data/processed/val
+#       - ml/scripts/train.py
+#       - ml/src
+#     params:
+#       - training
+#       - model
+#     outs:
+#       - ml/models/saved_models/${model.name}
+#       - ml/models/checkpoints
+#     metrics:
+#       - ml/logs/training_log.csv:
+#           cache: false
 
-  evaluate:
-    cmd: python ml/scripts/evaluate.py --model_path ml/models/saved_models/${model.name} --config ml/configs/training_config.yaml
-    deps:
-      - ml/models/saved_models/${model.name}
-      - ml/data/processed/test
-      - ml/scripts/evaluate.py
-    outs:
-      - ml/outputs/confusion_matrix.png
-    metrics:
-      - ml/outputs/metrics.json:
-          cache: false
+#   evaluate:
+#     cmd: python ml/scripts/evaluate.py --model_path ml/models/saved_models/${model.name} --config ml/configs/training_config.yaml
+#     deps:
+#       - ml/models/saved_models/${model.name}
+#       - ml/data/processed/test
+#       - ml/scripts/evaluate.py
+#     outs:
+#       - ml/outputs/confusion_matrix.png
+#     metrics:
+#       - ml/outputs/metrics.json:
+#           cache: false
 
-  convert_tflite:
-    cmd: python ml/scripts/convert_to_tflite.py --model_path ml/models/saved_models/${model.name} --output_path ml/models/tflite/${model.name}.tflite --quantize
-    deps:
-      - ml/models/saved_models/${model.name}
-      - ml/scripts/convert_to_tflite.py
-    outs:
-      - ml/models/tflite/${model.name}.tflite
+#   convert_tflite:
+#     cmd: python ml/scripts/convert_to_tflite.py --model_path ml/models/saved_models/${model.name} --output_path ml/models/tflite/${model.name}.tflite --quantize
+#     deps:
+#       - ml/models/saved_models/${model.name}
+#       - ml/scripts/convert_to_tflite.py
+#     outs:
+#       - ml/models/tflite/${model.name}.tflite
