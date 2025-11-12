@@ -11,3 +11,15 @@ Thumbs.db
 # Temporary files (nếu chúng có thể xuất hiện trong data folder)
 *.tmp
 *~
+
+.codeium/
+.cursor-server
+.idea/
+.keras/
+.lightning_studio/
+.streamlit/
+.vscode-server
+.vscode/
+.windsurf-server
+ml/src/data/__pycache__/
+ml/src/models/__pycache__/

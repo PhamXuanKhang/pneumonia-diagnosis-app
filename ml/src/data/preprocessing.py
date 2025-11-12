@@ -1,6 +1,7 @@
 """Image preprocessing utilities"""
 
 import tensorflow as tf
+from typing import Tuple
 
 
 class ImagePreprocessor:

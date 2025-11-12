@@ -1,0 +1,19 @@
+{
+  "model_name": "P2_EffNetB0_Baseline",
+  "input_shape": [
+    null,
+    224,
+    224,
+    3
+  ],
+  "output_shapes": [
+    [
+      null,
+      1
+    ]
+  ],
+  "preprocessing": "EfficientNet",
+  "quantized": true,
+  "multi_output": false,
+  "model_size_mb": 4.5
+}
