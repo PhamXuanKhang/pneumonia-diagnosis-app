@@ -23,3 +23,6 @@ Thumbs.db
 .windsurf-server
 ml/src/data/__pycache__/
 ml/src/models/__pycache__/
+
+mobile2/
+ml/models/saved_models
