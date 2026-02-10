@@ -73,7 +73,27 @@ class TFLiteInferenceEngine:
         
         print(f"TFLite model loaded: {tflite_path}")
         print(f"Input shape: {self.input_details[0]['shape']}")
-        print(f"Output shape: {self.output_details[0]['shape']}")
+        # ======================= SỬA LỖI =======================
+        # Sửa: Tự động tìm index của đầu ra classification (shape [1, 1])
+        # thay vì mặc định lấy index [0]
+        
+        self.classification_output_index = -1
+        
+        print("Đang tìm các đầu ra (output)...")
+        for i, detail in enumerate(self.output_details):
+            print(f"   -> Output {i} (index {detail['index']}): shape {detail['shape']}")
+            # Tìm đầu ra có shape [1, 1] (hoặc [null, 1])
+            if list(detail['shape']) == [1, 1]:
+                self.classification_output_index = detail['index']
+        
+        if self.classification_output_index == -1:
+            # Nếu không tìm thấy, quay về mặc định (và có thể sẽ lỗi)
+            print("CẢNH BÁO: Không tìm thấy classification output shape [1, 1].")
+            print("Giả định output [0] là classification.")
+            self.classification_output_index = self.output_details[0]['index']
+        
+        print(f"✅ Sẽ dùng Output index {self.classification_output_index} để lấy dự đoán.")
+        # =======================================================
     
     def predict_single(self, input_data):
         """
@@ -92,7 +112,10 @@ class TFLiteInferenceEngine:
         self.interpreter.invoke()
         
         # Get output
-        output = self.interpreter.get_tensor(self.output_details[0]['index'])
+        # ======================= SỬA LỖI =======================
+        # Lấy đúng tensor classification bằng index đã tìm thấy
+        output = self.interpreter.get_tensor(self.classification_output_index)
+        # =======================================================
         return output
     
     def predict_batch(self, image_paths, batch_size=32):

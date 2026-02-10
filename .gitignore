@@ -24,5 +24,7 @@ Thumbs.db
 ml/src/data/__pycache__/
 ml/src/models/__pycache__/
 
-mobile2/
+# mobile2/
 ml/models/saved_models
+mobile2/
+ml/src/__pycache__/__init__.cpython-39.pyc

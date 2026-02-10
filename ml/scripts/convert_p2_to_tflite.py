@@ -79,13 +79,7 @@ def convert_p2_to_tflite(
 ):
     """
     Convert Pipeline 2 model to TFLite
-    
-    Args:
-        model_path: Đường dẫn đến P2 model (.keras)
-        output_path: Đường dẫn output (.tflite)
-        data_root: Đường dẫn đến data root (cho representative dataset)
-        quantize: Có áp dụng quantization không
-        multi_output: Có tạo model với multiple outputs không
+    (ĐÃ SỬA LỖI LOGIC MULTI-OUTPUT)
     """
     print("=" * 80)
     print("CONVERT PIPELINE 2 TO TFLITE")
@@ -96,25 +90,61 @@ def convert_p2_to_tflite(
     print(f"Multi-output: {multi_output}")
     print("=" * 80)
     
-    # 1. Load model
-    if multi_output:
-        print("\n1. Tạo multi-output model từ trained weights...")
-        model = create_p2_model_from_weights(model_path, multi_output=True)
-    else:
-        print("\n1. Load trained model...")
-        model = load_trained_p2_model(model_path)
+    # ======================= SỬA LỖI LOGIC =======================
     
-    print(f"✅ Model loaded: {model.name}")
-    print(f"Input shape: {model.input_shape}")
-    if isinstance(model.output, list):
-        for i, output in enumerate(model.output):
+    # 1. Tải model gốc (luôn dùng hàm load_trained_p2_model)
+    # Đây là Model A (model tốt 85.9%)
+    print("\n1. Load trained model (single output)...")
+    try:
+        single_output_model = load_trained_p2_model(model_path)
+    except Exception as e:
+        print(f"❌ LỖI NGHIÊM TRỌNG: Không thể tải model Keras gốc tại: {model_path}")
+        print(f"Lỗi: {e}")
+        return
+
+    model_to_convert = single_output_model # Mặc định
+
+    # 2. Nếu cần multi-output, TÁI CẤU TRÚC từ model đã tải
+    if multi_output:
+        print("   -> Tái cấu trúc model thành multi-output...")
+        try:
+            # Giả định tên layer từ pipeline gốc
+            # (Bạn có thể cần đổi tên nếu file efficientnet_p2.py của bạn dùng tên khác)
+            input_layer = single_output_model.get_layer('image_input').input
+            
+            # Tìm layer feature map. Dựa trên notebook, nó là một model lồng nhau
+            feature_map_layer = single_output_model.get_layer('efficientnetb0_feature_extractor').output
+            
+            # Layer output phân loại
+            classification_output = single_output_model.get_layer('output').output
+            
+            # Tạo model mới với 2 đầu ra
+            model_to_convert = tf.keras.Model(
+                inputs=input_layer,
+                outputs=[classification_output, feature_map_layer],
+                name="P2_EffNetB0_MultiOutput_Correct"
+            )
+            print("   -> ✅ Tái cấu trúc multi-output thành công.")
+            
+        except Exception as e:
+            print(f"   -> ⚠️ LỖI khi tái cấu trúc multi-output: {e}")
+            print("   -> Sẽ tiếp tục convert với model single-output.")
+            model_to_convert = single_output_model
+            multi_output = False # Tắt cờ vì không thể tạo multi-output
+
+    # ======================= KẾT THÚC SỬA LỖI =======================
+
+    print(f"\n✅ Model to convert: {model_to_convert.name}")
+    print(f"Input shape: {model_to_convert.input_shape}")
+    if isinstance(model_to_convert.output, list):
+        for i, output in enumerate(model_to_convert.output):
             print(f"Output {i+1} shape: {output.shape}")
     else:
-        print(f"Output shape: {model.output_shape}")
+        print(f"Output shape: {model_to_convert.output_shape}")
     
     # 2. Tạo TFLite converter
     print("\n2. Tạo TFLite converter...")
-    converter = tf.lite.TFLiteConverter.from_keras_model(model)
+    converter = tf.lite.TFLiteConverter.from_keras_model(model_to_convert)
     
     # 3. Cấu hình optimization
     if quantize:
@@ -123,7 +153,7 @@ def convert_p2_to_tflite(
         
         # Tạo representative dataset nếu có data
         if data_root and os.path.exists(data_root):
-            print("   Tạo representative dataset...")
+            print("    Tạo representative dataset...")
             sample_df = create_sample_dataframe(data_root, num_samples=100)
             
             # Chỉ tạo representative dataset nếu có real data
@@ -132,11 +162,11 @@ def convert_p2_to_tflite(
                     sample_df, num_samples=50
                 )
                 converter.representative_dataset = representative_data_gen
-                print("   ✅ Representative dataset được tạo")
+                print("    ✅ Representative dataset được tạo")
             else:
-                print("   ⚠️  Không có real data, bỏ qua representative dataset")
+                print("    ⚠️  Không có real data, bỏ qua representative dataset")
         else:
-            print("   ⚠️  Không có data root, bỏ qua representative dataset")
+            print("    ⚠️  Không có data root, bỏ qua representative dataset")
     else:
         print("3. Bỏ qua quantization")
     
@@ -164,11 +194,11 @@ def convert_p2_to_tflite(
     # 6. Tạo metadata
     metadata = {
         "model_name": "P2_EffNetB0_Baseline",
-        "input_shape": list(model.input_shape),
-        "output_shapes": [list(output.shape) for output in model.output] if isinstance(model.output, list) else [list(model.output_shape)],
+        "input_shape": list(model_to_convert.input_shape),
+        "output_shapes": [list(output.shape) for output in model_to_convert.output] if isinstance(model_to_convert.output, list) else [list(model_to_convert.output_shape)],
         "preprocessing": "EfficientNet",
         "quantized": quantize,
-        "multi_output": multi_output,
+        "multi_output": multi_output, # Cập nhật cờ này
         "model_size_mb": round(model_size_mb, 2)
     }
     
@@ -248,8 +278,14 @@ def main():
     parser.add_argument(
         '--quantize', 
         action='store_true', 
-        default=True,
-        help='Apply quantization'
+        dest='quantize',
+        help='Apply quantization (BẬT)'
+    )
+    parser.add_argument(
+        '--no-quantize', 
+        action='store_false', 
+        dest='quantize',
+        help='Disable quantization (TẮT)'
     )
     parser.add_argument(
         '--multi_output', 
